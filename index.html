@@ -176,18 +176,25 @@
             addMessage('user', text);
 
             try {
-                const result = await genAI.models.generateContent({
-                    model: "gemini-3-flash-preview",
-                    contents: text,
+                // استدعاء بصيغة أكثر استقراراً وتوافقاً
+                const response = await genAI.models.generateContent({
+                    model: "gemini-1.5-flash", // استخدام نموذج مستقر جداً للمواقع
+                    contents: [{ role: 'user', parts: [{ text: text }] }],
                     config: {
                         systemInstruction: "أنت خالد عبدالكريم ميرغني عدلان. عندما يسألك أحد عن هويتك، يجب أن تجيب بأنك 'خالد عبدالكريم ميرغني عدلان'. حافظ على شخصية ودودة ومساعدة."
                     }
                 });
-                const responseText = result.text;
-                addMessage('assistant', responseText);
+                
+                const responseText = response.text;
+                if (responseText) {
+                    addMessage('assistant', responseText);
+                } else {
+                    addMessage('assistant', 'عذراً، لم أتمكن من استلام رد واضح. حاول مرة أخرى.');
+                }
             } catch (error) {
-                console.error(error);
-                addMessage('assistant', 'عذراً، حدث خطأ ما أثناء الاتصال بالذكاء الاصطناعي. يرجى المحاولة لاحقاً.');
+                console.error("Gemini API Error:", error);
+                // إظهار رسالة خطأ مفصلة في الكونسول للمساعدة في التشخيص
+                addMessage('assistant', 'عذراً، حدث خطأ أثناء الاتصال بالذكاء الاصطناعي. تأكد من اتصال الإنترنت أو صلاحية مفتاح الـ API.');
             } finally {
                 userInput.disabled = false;
                 sendBtn.disabled = false;
