@@ -1,296 +1,201 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
-
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.2, maximum-scale=2.0">
-
-<title>التسامح</title>
-
-<style>
-
-body{
-margin:0;
-font-family:Tahoma, Arial;
-background:white;
-direction:rtl;
-text-align:center;
-}
-
-#welcome{
-display:flex;
-flex-direction:column;
-justify-content:center;
-align-items:center;
-height:100vh;
-padding:10px;
-}
-
-.logo{
-width:170px;
-border-radius:20px;
-box-shadow:0 10px 25px rgba(0,0,0,0.25);
-animation:logoAppear 2s ease forwards, breath 4s infinite ease-in-out 2s;
-}
-
-@keyframes logoAppear{
-from{opacity:0; transform:scale(0.5);}
-to{opacity:1; transform:scale(1);}
-}
-
-@keyframes breath{
-0%{transform:scale(1);}
-50%{transform:scale(1.05);}
-100%{transform:scale(1);}
-}
-
-.title{
-font-size:34px;
-color:red;
-font-weight:bold;
-margin:20px;
-}
-
-.start-btn{
-background:#27ae60;
-color:white;
-border:none;
-padding:14px 40px;
-font-size:18px;
-border-radius:10px;
-cursor:pointer;
-}
-
-.message{
-margin-top:30px;
-color:red;
-font-size:16px;
-width:85%;
-}
-
-.designer{
-position:absolute;
-bottom:10px;
-font-size:12px;
-color:black;
-}
-
-#formPage{
-display:none;
-padding:10px;
-}
-
-.back-btn{
-background:black;
-color:white;
-border:none;
-padding:10px 20px;
-margin-bottom:10px;
-border-radius:8px;
-font-size:14px;
-}
-
-table{
-width:100%;
-border-collapse:collapse;
-font-size:15px;
-}
-
-td{
-border:2px solid black;
-padding:10px;
-text-align:right;
-}
-
-input[type=text],input[type=tel]{
-width:95%;
-padding:8px;
-font-size:15px;
-}
-
-.options label{
-display:block;
-margin:4px 0;
-}
-
-.submit-btn{
-background:#27ae60;
-color:white;
-border:none;
-padding:14px;
-width:100%;
-font-size:18px;
-margin-top:15px;
-border-radius:8px;
-}
-
-.footer{
-margin-top:10px;
-font-size:12px;
-color:black;
-}
-
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Khalid AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .dir-rtl { direction: rtl; }
+        .dir-ltr { direction: ltr; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
+    </style>
 </head>
+<body class="bg-zinc-950 text-zinc-100 antialiased min-h-screen flex flex-col overflow-hidden">
 
-<body>
+    <!-- شاشة الترحيب (Splash Screen) -->
+    <div id="splash" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-zinc-950 transition-opacity duration-700">
+        <div class="relative mb-8">
+            <div class="absolute -inset-4 bg-orange-500/20 blur-3xl rounded-full"></div>
+            <img src="https://i.pinimg.com/736x/37/3b/cd/373bcd47e93ac89fe5cd4274f11699a4.jpg" 
+                 alt="Khalid AI Logo" 
+                 class="relative w-48 h-48 md:w-64 md:h-64 object-cover rounded-2xl shadow-2xl border border-zinc-800">
+        </div>
+        <div class="text-center space-y-2">
+            <h1 class="text-4xl md:text-5xl font-bold tracking-tighter bg-gradient-to-b from-white to-zinc-400 bg-clip-text text-transparent">
+                Khalid AI
+            </h1>
+            <p class="text-zinc-500 text-lg font-medium">مرحبا بك في Khalid Ai</p>
+        </div>
+        <div class="absolute bottom-12">
+            <div class="w-6 h-6 border-2 border-zinc-700 border-t-orange-500 rounded-full animate-spin"></div>
+        </div>
+    </div>
 
-<div id="welcome">
+    <!-- نافذة منبثقة سرية (Secret Popup) -->
+    <div id="secret-popup" class="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/90 hidden opacity-0 transition-opacity duration-300">
+        <img src="https://i.pinimg.com/736x/71/a1/cb/71a1cb5cc23753b03cb1767e46257f53.jpg" 
+             class="w-64 h-64 md:w-80 md:h-80 object-cover rounded-3xl shadow-2xl border-4 border-white/10">
+        <h2 class="mt-6 text-3xl md:text-4xl font-black text-white text-center">الخبر شنو تاني</h2>
+    </div>
 
-<img src="https://i.pinimg.com/736x/84/df/77/84df77980c4741b052553a23a2aa3057.jpg" class="logo">
+    <!-- واجهة التطبيق الرئيسية -->
+    <div id="app" class="hidden flex flex-col h-screen max-w-3xl mx-auto w-full relative opacity-0 transition-opacity duration-700">
+        <!-- الرأس (Header) -->
+        <header class="p-4 border-b border-zinc-900 flex items-center justify-between backdrop-blur-md sticky top-0 z-10 bg-zinc-950/80">
+            <div class="flex items-center gap-3">
+                <div id="logo-btn" class="w-10 h-10 rounded-xl overflow-hidden border border-zinc-800 cursor-pointer active:scale-95 transition-transform">
+                    <img src="https://i.pinimg.com/736x/37/3b/cd/373bcd47e93ac89fe5cd4274f11699a4.jpg" 
+                         alt="Logo" class="w-full h-full object-cover">
+                </div>
+                <div>
+                    <h2 class="font-bold tracking-tight">Khalid AI</h2>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span class="text-[10px] text-zinc-500 uppercase tracking-widest font-semibold">Online</span>
+                    </div>
+                </div>
+            </div>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-orange-500/50"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+        </header>
 
-<div class="title">التسامح</div>
+        <!-- منطقة الدردشة -->
+        <main id="chat-area" class="flex-1 overflow-y-auto p-4 space-y-6 scroll-smooth">
+            <div id="empty-state" class="h-full flex flex-col items-center justify-center text-center space-y-4 opacity-50">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-zinc-700"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>
+                <div class="space-y-1">
+                    <p class="text-xl font-medium">كيف يمكنني مساعدتك اليوم؟</p>
+                    <p class="text-sm">اسألني أي شيء وسأجيبك بكل سرور</p>
+                </div>
+            </div>
+        </main>
 
-<button class="start-btn" onclick="openForm()">ابدأ</button>
+        <!-- منطقة الإدخال -->
+        <footer class="p-4 bg-zinc-950">
+            <form id="chat-form" class="relative flex items-center">
+                <input type="text" id="user-input" placeholder="اكتب سؤالك هنا..." 
+                       class="w-full bg-zinc-900 border border-zinc-800 rounded-2xl px-5 py-4 pr-14 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500/50 transition-all placeholder:text-zinc-600 text-right dir-rtl">
+                <button type="submit" id="send-btn" 
+                        class="absolute left-2 p-2.5 rounded-xl bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-50 disabled:hover:bg-orange-500 transition-colors shadow-lg shadow-orange-500/20">
+                    <svg id="send-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+                    <div id="loading-spinner" class="hidden w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                </button>
+            </form>
+            <p class="text-[10px] text-center text-zinc-600 mt-3 uppercase tracking-widest font-medium">
+                Designed by Abdalla kopara
+            </p>
+        </footer>
+    </div>
 
-<div class="message">
-مرحبا بك في متجر التسامح للصيانة والخدمات الالكترونية بجودة وسرعة عالية.
-</div>
+    <script type="module">
+        import { GoogleGenAI } from 'https://esm.run/@google/genai';
 
-<div class="designer">
-Designed by: Abdalla Hashim Merghani
-</div>
+        // استخدام المفتاح الذي زودتني به
+        const API_KEY = 'AIzaSyASeYa7eJaBUshIBTWW_bRDQ1SgX-Z8AE0';
+        const genAI = new GoogleGenAI({ apiKey: API_KEY });
 
-</div>
+        const splash = document.getElementById('splash');
+        const app = document.getElementById('app');
+        const chatArea = document.getElementById('chat-area');
+        const emptyState = document.getElementById('empty-state');
+        const chatForm = document.getElementById('chat-form');
+        const userInput = document.getElementById('user-input');
+        const sendBtn = document.getElementById('send-btn');
+        const sendIcon = document.getElementById('send-icon');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const logoBtn = document.getElementById('logo-btn');
+        const secretPopup = document.getElementById('secret-popup');
 
+        // منطق الشعار السري
+        logoBtn.onclick = () => {
+            secretPopup.classList.remove('hidden');
+            setTimeout(() => secretPopup.style.opacity = '1', 10);
+            
+            setTimeout(() => {
+                secretPopup.style.opacity = '0';
+                setTimeout(() => secretPopup.classList.add('hidden'), 300);
+            }, 2000);
+        };
 
-<div id="formPage">
+        // منطق شاشة الترحيب
+        setTimeout(() => {
+            splash.style.opacity = '0';
+            setTimeout(() => {
+                splash.classList.add('hidden');
+                app.classList.remove('hidden');
+                setTimeout(() => app.style.opacity = '1', 50);
+            }, 700);
+        }, 3000);
 
-<button class="back-btn" onclick="goBack()">رجوع</button>
+        // إضافة رسالة للواجهة
+        function addMessage(role, content) {
+            emptyState.classList.add('hidden');
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `flex gap-4 ${role === 'user' ? 'flex-row-reverse' : ''} animate-fade-in`;
+            
+            const icon = role === 'user' 
+                ? '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'
+                : '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>';
 
-<table>
+            msgDiv.innerHTML = `
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border ${role === 'user' ? 'bg-zinc-800 border-zinc-700' : 'bg-orange-500/10 border-orange-500/20 text-orange-500'}">
+                    ${icon}
+                </div>
+                <div class="max-w-[85%] space-y-1 ${role === 'user' ? 'text-right' : 'text-left'}">
+                    <div class="px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${role === 'user' ? 'bg-zinc-900 text-zinc-100 rounded-tr-none' : 'bg-zinc-900/50 text-zinc-300 rounded-tl-none border border-zinc-800'}">
+                        ${content}
+                    </div>
+                </div>
+            `;
+            chatArea.appendChild(msgDiv);
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
 
-<tr>
-<td>الاسم</td>
-<td><input type="text" id="name"></td>
-</tr>
+        // إرسال السؤال
+        chatForm.onsubmit = async (e) => {
+            e.preventDefault();
+            const text = userInput.value.trim();
+            if (!text) return;
 
-<tr>
-<td>نوع الهاتف</td>
-<td class="options">
+            // تحديث الواجهة للإرسال
+            userInput.value = '';
+            userInput.disabled = true;
+            sendBtn.disabled = true;
+            sendIcon.classList.add('hidden');
+            loadingSpinner.classList.remove('hidden');
 
-<label><input type="radio" name="phone" value="Samsung"> Samsung</label>
-<label><input type="radio" name="phone" value="Huawei"> Huawei</label>
-<label><input type="radio" name="phone" value="Xiaomi"> Xiaomi</label>
-<label><input type="radio" name="phone" value="Honor"> Honor</label>
-<label><input type="radio" name="phone" value="Tecno"> Tecno</label>
-<label><input type="radio" name="phone" value="Apple"> Apple</label>
-<label><input type="radio" name="phone" value="Realme"> Realme</label>
-<label><input type="radio" name="phone" value="Vivo"> Vivo</label>
+            addMessage('user', text);
 
-<label>
-<input type="radio" name="phone" value="Other" onclick="showOtherPhone()"> جهاز اخر
-</label>
-
-<div id="otherPhoneBox" style="display:none;">
-<input type="text" id="otherPhone" placeholder="اكتب نوع الهاتف">
-</div>
-
-</td>
-</tr>
-
-<tr>
-<td>مشكلة الهاتف</td>
-
-<td class="options">
-
-<label><input type="radio" name="problem" value="شاشة" onclick="hideOtherProblem()"> شاشة</label>
-<label><input type="radio" name="problem" value="بطارية" onclick="hideOtherProblem()"> بطارية</label>
-<label><input type="radio" name="problem" value="سوكت" onclick="hideOtherProblem()"> سوكت</label>
-<label><input type="radio" name="problem" value="فرمتة" onclick="hideOtherProblem()"> فرمتة</label>
-<label><input type="radio" name="problem" value="فحص" onclick="hideOtherProblem()"> فحص</label>
-
-<label>
-<input type="radio" name="problem" value="اخرى" onclick="showOtherProblem()"> اخرى
-</label>
-
-<div id="otherProblemBox" style="display:none;">
-<input type="text" id="otherProblem" placeholder="اكتب المشكلة">
-</div>
-
-</td>
-</tr>
-
-<tr>
-<td>رقم الهاتف</td>
-<td><input type="tel" id="phoneNumber"></td>
-</tr>
-
-</table>
-
-<button class="submit-btn" onclick="sendTelegram()">وضع طلب</button>
-
-<div class="footer">
-للاستفسار: +249100143447
-</div>
-
-</div>
-
-
-<script>
-
-function openForm(){
-document.getElementById("welcome").style.display="none";
-document.getElementById("formPage").style.display="block";
-}
-
-function goBack(){
-document.getElementById("formPage").style.display="none";
-document.getElementById("welcome").style.display="flex";
-}
-
-function showOtherPhone(){
-document.getElementById("otherPhoneBox").style.display="block";
-}
-
-function showOtherProblem(){
-document.getElementById("otherProblemBox").style.display="block";
-}
-
-function hideOtherProblem(){
-document.getElementById("otherProblemBox").style.display="none";
-}
-
-function sendTelegram(){
-
-let name=document.getElementById("name").value;
-let phoneNumber=document.getElementById("phoneNumber").value;
-let otherProblem=document.getElementById("otherProblem").value;
-let otherPhone=document.getElementById("otherPhone").value;
-
-let phone=document.querySelector('input[name="phone"]:checked');
-let problem=document.querySelector('input[name="problem"]:checked');
-
-phone=phone?phone.value:"";
-problem=problem?problem.value:"";
-
-if(phone=="Other"){
-phone="جهاز اخر: "+otherPhone;
-}
-
-if(problem=="اخرى"){
-problem="اخرى: "+otherProblem;
-}
-
-let text=
-"طلب صيانة جديد %0A"+
-"الاسم: "+name+"%0A"+
-"نوع الهاتف: "+phone+"%0A"+
-"المشكلة: "+problem+"%0A"+
-"رقم الهاتف: "+phoneNumber;
-
-let token="8620736182:AAFwcp0fsNH7WSiPm2AVDh3qWrsCf_m4ZTA";
-let chat_id="8331036866";
-
-let url="https://api.telegram.org/bot"+token+"/sendMessage?chat_id="+chat_id+"&text="+text;
-
-fetch(url);
-
-alert("تم ارسال الطلب بنجاح");
-
-}
-
-</script>
-
+            try {
+                const result = await genAI.models.generateContent({
+                    model: "gemini-3-flash-preview",
+                    contents: text,
+                    config: {
+                        systemInstruction: "أنت خالد عبدالكريم ميرغني عدلان. عندما يسألك أحد عن هويتك، يجب أن تجيب بأنك 'خالد عبدالكريم ميرغني عدلان'. حافظ على شخصية ودودة ومساعدة."
+                    }
+                });
+                const responseText = result.text;
+                addMessage('assistant', responseText);
+            } catch (error) {
+                console.error(error);
+                addMessage('assistant', 'عذراً، حدث خطأ ما أثناء الاتصال بالذكاء الاصطناعي. يرجى المحاولة لاحقاً.');
+            } finally {
+                userInput.disabled = false;
+                sendBtn.disabled = false;
+                sendIcon.classList.remove('hidden');
+                loadingSpinner.classList.add('hidden');
+                userInput.focus();
+            }
+        };
+    </script>
 </body>
 </html>
