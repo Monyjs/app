@@ -99,11 +99,18 @@
                     if (window.firebaseApp) {
                         const { auth, onAuthStateChanged, db, doc, setDoc, collection, query, orderBy, limit, onSnapshot, getRedirectResult } = window.firebaseApp;
                         
-                        // Check for redirect result (for mobile)
+                        // Check for redirect result
                         try {
-                            await getRedirectResult(auth);
+                            const result = await getRedirectResult(auth);
+                            if (result) {
+                                setStatusMsg("تم تسجيل الدخول بنجاح!");
+                                setTimeout(() => setStatusMsg(""), 3000);
+                            }
                         } catch (error) {
                             console.error("Redirect result error:", error.message);
+                            if (error.code === 'auth/credential-already-in-use') {
+                                setStatusMsg("هذا الحساب مستخدم بالفعل.");
+                            }
                         }
 
                         // Auth Listener
@@ -154,27 +161,14 @@
             }, []);
 
             const handleSignIn = async () => {
-                const { auth, googleProvider, signInWithPopup, signInWithRedirect } = window.firebaseApp;
-                setStatusMsg("جاري فتح صفحة تسجيل الدخول...");
+                const { auth, googleProvider, signInWithRedirect } = window.firebaseApp;
+                setStatusMsg("جاري توجيهك لصفحة تسجيل الدخول من قوقل...");
                 
                 try {
-                    // Detect mobile devices
-                    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-                    
-                    if (isMobile) {
-                        // Use Redirect for mobile (more stable)
-                        await signInWithRedirect(auth, googleProvider);
-                    } else {
-                        // Use Popup for desktop
-                        await signInWithPopup(auth, googleProvider);
-                    }
+                    await signInWithRedirect(auth, googleProvider);
                 } catch (error) {
                     console.error("Sign in error:", error.message);
-                    if (error.code === 'auth/popup-blocked') {
-                        setStatusMsg("تم حظر النافذة المنبثقة. يرجى السماح بالمنبثقات أو المحاولة من متصفح آخر.");
-                    } else {
-                        setStatusMsg("فشل تسجيل الدخول. يرجى المحاولة مرة أخرى.");
-                    }
+                    setStatusMsg("فشل بدء عملية تسجيل الدخول. يرجى المحاولة مرة أخرى.");
                 }
             };
 
