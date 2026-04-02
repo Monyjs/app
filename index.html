@@ -349,8 +349,8 @@
         <div class="auth-container">
             <img class="auth-logo" src="https://i.pinimg.com/736x/92/f8/f9/92f8f92a91bf7de670dddb7b1171a250.jpg">
             <div class="auth-title">Nilechat</div>
-            <button class="auth-btn main-btn" id="signupText" onclick="showPage('signupPage')">إنشاء حساب</button>
-            <button class="auth-btn secondary-btn" id="loginText" onclick="showPage('loginPage')">لدي حساب بالفعل</button>
+            <button class="auth-btn main-btn" id="signupText" onclick="signupWithGoogle()">إنشاء حساب</button>
+            <button class="auth-btn secondary-btn" id="loginText" onclick="loginWithGoogle()">لدي حساب بالفعل</button>
         </div>
     </div>
 
@@ -1736,7 +1736,7 @@
                 return;
             }
             showPage('app-container');
-            renderRooms();
+            switchViewMode('online');
             setupRealtimeListeners();
         }
 
