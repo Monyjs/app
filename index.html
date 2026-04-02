@@ -38,7 +38,7 @@
     <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getAuth, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, doc, setDoc, addDoc, collection, serverTimestamp, onSnapshot, query, orderBy, limit, getDocFromCache, getDocFromServer } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         // Firebase Configuration (AI Studio Managed)
@@ -59,7 +59,7 @@
         const googleProvider = new GoogleAuthProvider();
 
         // Expose to window for React to use
-        window.firebaseApp = { auth, db, googleProvider, signInWithPopup, signOut, onAuthStateChanged, doc, setDoc, addDoc, collection, serverTimestamp, onSnapshot, query, orderBy, limit, getDocFromServer };
+        window.firebaseApp = { auth, db, googleProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, doc, setDoc, addDoc, collection, serverTimestamp, onSnapshot, query, orderBy, limit, getDocFromServer };
     </script>
 
     <script type="text/babel">
@@ -95,10 +95,17 @@
                 let unsubscribeAuth = null;
                 let unsubscribeChat = null;
 
-                const setupListeners = () => {
+                const setupListeners = async () => {
                     if (window.firebaseApp) {
-                        const { auth, onAuthStateChanged, db, doc, setDoc, collection, query, orderBy, limit, onSnapshot } = window.firebaseApp;
+                        const { auth, onAuthStateChanged, db, doc, setDoc, collection, query, orderBy, limit, onSnapshot, getRedirectResult } = window.firebaseApp;
                         
+                        // Check for redirect result (for mobile)
+                        try {
+                            await getRedirectResult(auth);
+                        } catch (error) {
+                            console.error("Redirect result error:", error.message);
+                        }
+
                         // Auth Listener
                         unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
                             setUser(currentUser);
@@ -147,13 +154,27 @@
             }, []);
 
             const handleSignIn = async () => {
-                const { auth, googleProvider, signInWithPopup } = window.firebaseApp;
-                setStatusMsg("");
+                const { auth, googleProvider, signInWithPopup, signInWithRedirect } = window.firebaseApp;
+                setStatusMsg("جاري فتح صفحة تسجيل الدخول...");
+                
                 try {
-                    await signInWithPopup(auth, googleProvider);
+                    // Detect mobile devices
+                    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+                    
+                    if (isMobile) {
+                        // Use Redirect for mobile (more stable)
+                        await signInWithRedirect(auth, googleProvider);
+                    } else {
+                        // Use Popup for desktop
+                        await signInWithPopup(auth, googleProvider);
+                    }
                 } catch (error) {
                     console.error("Sign in error:", error.message);
-                    setStatusMsg("فشل تسجيل الدخول. يرجى المحاولة مرة أخرى.");
+                    if (error.code === 'auth/popup-blocked') {
+                        setStatusMsg("تم حظر النافذة المنبثقة. يرجى السماح بالمنبثقات أو المحاولة من متصفح آخر.");
+                    } else {
+                        setStatusMsg("فشل تسجيل الدخول. يرجى المحاولة مرة أخرى.");
+                    }
                 }
             };
 
