@@ -3,45 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>حكم ونصائح عشوائية - تجربة Firebase</title>
+    <title>دردشة المجموعات - Firebase</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- React & ReactDOM -->
-    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <!-- Babel for JSX -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- Framer Motion (Motion) -->
-    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
     
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap');
-        body {
-            font-family: 'Noto Sans Arabic', 'Inter', sans-serif;
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap');
+        body { font-family: 'Noto Sans Arabic', sans-serif; }
+        .glass { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); }
+        .chat-container { height: calc(100vh - 140px); }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-900">
     <div id="root"></div>
 
-    <script type="text/babel">
-        const { useState, useEffect, useRef } = React;
-        const { motion, AnimatePresence } = window.Motion || { motion: { div: 'div' }, AnimatePresence: ({children}) => children };
-
-        // Initialize Firebase via CDN Modules
-        // Note: In a real standalone HTML, we'd use import maps or specific CDN URLs
-        // For this environment, we'll use the global Firebase if available or dynamic imports
-    </script>
-
-    <!-- Firebase SDKs -->
+    <!-- Firebase SDKs (Modular v10) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, doc, setDoc, addDoc, collection, serverTimestamp, onSnapshot, query, orderBy, limit, getDocFromCache, getDocFromServer } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getAuth, signInWithRedirect, getRedirectResult, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // Firebase Configuration (AI Studio Managed)
+        // إعدادات Firebase المخصصة (AI Studio Managed)
         const firebaseConfig = {
           apiKey: "AIzaSyDgfLujLrCYf0Ck_iYq0DSPwQwwtjQumAc",
           authDomain: "gen-lang-client-0715906177.firebaseapp.com",
@@ -53,333 +42,192 @@
         };
 
         const app = initializeApp(firebaseConfig);
-
         const auth = getAuth(app);
         const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
         const googleProvider = new GoogleAuthProvider();
 
-        // Expose to window for React to use
-        window.firebaseApp = { auth, db, googleProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, doc, setDoc, addDoc, collection, serverTimestamp, onSnapshot, query, orderBy, limit, getDocFromServer };
+        // تصدير الدوال للنافذة العالمية ليستخدمها React
+        window.firebaseApp = { 
+            auth, db, googleProvider, 
+            signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, 
+            collection, addDoc, serverTimestamp, onSnapshot, query, orderBy, limit 
+        };
     </script>
 
+    <!-- React Application -->
     <script type="text/babel">
-        const INITIAL_QUOTES = [
-            { text: "لا تؤجل عمل اليوم إلى الغد.", author: "حكمة عربية" },
-            { text: "الوقت كالسيف إن لم تقطعه قطعك.", author: "حكمة عربية" },
-            { text: "من جد وجد ومن زرع حصد.", author: "حكمة عربية" },
-            { text: "العلم في الصغر كالنقش على الحجر.", author: "حكمة عربية" },
-            { text: "الصبر مفتاح الفرج.", author: "حكمة عربية" },
-            { text: "خير الكلام ما قل ودل.", author: "حكمة عربية" },
-            { text: "اتق شر من أحسنت إليه.", author: "حكمة عربية" },
-            { text: "القناعة كنز لا يفنى.", author: "حكمة عربية" }
-        ];
+        const { useState, useEffect, useRef } = React;
 
         function App() {
             const [user, setUser] = useState(null);
             const [loading, setLoading] = useState(true);
-            const [currentQuote, setCurrentQuote] = useState(INITIAL_QUOTES[0]);
-            const [isRefreshing, setIsRefreshing] = useState(false);
             const [message, setMessage] = useState("");
-            const [isSending, setIsSending] = useState(false);
-            const [statusMsg, setStatusMsg] = useState("");
             const [chatMessages, setChatMessages] = useState([]);
+            const [status, setStatus] = useState("");
             const scrollRef = useRef(null);
 
             useEffect(() => {
-                if (scrollRef.current) {
-                    scrollRef.current.scrollIntoView({ behavior: "smooth" });
-                }
+                if (scrollRef.current) scrollRef.current.scrollIntoView({ behavior: "smooth" });
             }, [chatMessages]);
 
             useEffect(() => {
                 let unsubscribeAuth = null;
                 let unsubscribeChat = null;
 
-                const setupListeners = async () => {
-                    if (window.firebaseApp) {
-                        const { auth, onAuthStateChanged, db, doc, setDoc, collection, query, orderBy, limit, onSnapshot, getRedirectResult } = window.firebaseApp;
-                        
-                        // Check for redirect result
-                        try {
-                            const result = await getRedirectResult(auth);
-                            if (result) {
-                                setStatusMsg("تم تسجيل الدخول بنجاح!");
-                                setTimeout(() => setStatusMsg(""), 3000);
-                            }
-                        } catch (error) {
-                            console.error("Redirect result error:", error.message);
-                            if (error.code === 'auth/credential-already-in-use') {
-                                setStatusMsg("هذا الحساب مستخدم بالفعل.");
-                            }
-                        }
-
-                        // Auth Listener
-                        unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
-                            setUser(currentUser);
-                            if (currentUser) {
-                                try {
-                                    const userRef = doc(db, 'users', currentUser.uid);
-                                    await setDoc(userRef, {
-                                        uid: currentUser.uid,
-                                        displayName: currentUser.displayName || 'Anonymous',
-                                        email: currentUser.email || '',
-                                        photoURL: currentUser.photoURL || '',
-                                        lastLogin: new Date().toISOString()
-                                    }, { merge: true });
-                                } catch (e) {
-                                    console.error("Firestore sync error:", e.message);
-                                }
-                            }
-                            setLoading(false);
-                        });
-
-                        // Chat Messages Listener
-                        const q = query(collection(db, "messages"), orderBy("createdAt", "desc"), limit(50));
-                        unsubscribeChat = onSnapshot(q, 
-                            (snapshot) => {
-                                const msgs = snapshot.docs.map(doc => ({
-                                    id: doc.id,
-                                    ...doc.data()
-                                })).reverse();
-                                setChatMessages(msgs);
-                            },
-                            (error) => {
-                                console.error("Chat Listener Error:", error.message);
-                            }
-                        );
-                    } else {
-                        setTimeout(setupListeners, 100);
+                const init = async () => {
+                    if (!window.firebaseApp) {
+                        setTimeout(init, 100);
+                        return;
                     }
+
+                    const { auth, getRedirectResult, onAuthStateChanged, db, collection, query, orderBy, limit, onSnapshot } = window.firebaseApp;
+
+                    // معالجة نتيجة إعادة التوجيه فور التحميل
+                    try {
+                        const result = await getRedirectResult(auth);
+                        if (result) {
+                            setStatus("تم تسجيل الدخول بنجاح!");
+                            setTimeout(() => setStatus(""), 3000);
+                        }
+                    } catch (error) {
+                        console.error("Redirect Error:", error.message);
+                        if (error.code === 'auth/unauthorized-domain') {
+                            setStatus("خطأ: النطاق غير مصرح به في Firebase.");
+                        }
+                    }
+
+                    // مراقب حالة تسجيل الدخول
+                    unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
+                        setUser(currentUser);
+                        setLoading(false);
+                    });
+
+                    // مراقب الرسائل في Firestore
+                    const q = query(collection(db, "messages"), orderBy("createdAt", "desc"), limit(50));
+                    unsubscribeChat = onSnapshot(q, (snapshot) => {
+                        const msgs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).reverse();
+                        setChatMessages(msgs);
+                    });
                 };
 
-                setupListeners();
-
+                init();
                 return () => {
                     if (unsubscribeAuth) unsubscribeAuth();
                     if (unsubscribeChat) unsubscribeChat();
                 };
             }, []);
 
-            const handleSignIn = async () => {
+            const handleLogin = async () => {
                 const { auth, googleProvider, signInWithRedirect } = window.firebaseApp;
-                setStatusMsg("جاري توجيهك لصفحة تسجيل الدخول من قوقل...");
-                
+                setStatus("جاري تحويلك لتسجيل الدخول...");
                 try {
-                    // Use Redirect exclusively as requested for maximum compatibility
                     await signInWithRedirect(auth, googleProvider);
                 } catch (error) {
-                    console.error("Sign in error:", error.message);
-                    setStatusMsg("فشل بدء عملية تسجيل الدخول. يرجى المحاولة مرة أخرى.");
+                    setStatus("فشل بدء تسجيل الدخول.");
                 }
             };
 
-            const handleSignOut = async () => {
-                const { auth, signOut } = window.firebaseApp;
-                try {
-                    await signOut(auth);
-                } catch (error) {
-                    console.error("Sign out error:", error);
-                }
-            };
+            const handleLogout = () => window.firebaseApp.signOut(window.firebaseApp.auth);
 
-            const handleSendMessage = async (e) => {
+            const sendMessage = async (e) => {
                 e.preventDefault();
-                if (!user) {
-                    alert("يرجى تسجيل الدخول أولاً");
-                    return;
-                }
-                if (!message.trim()) return;
-
-                setIsSending(true);
+                if (!message.trim() || !user) return;
+                
                 const { db, collection, addDoc, serverTimestamp } = window.firebaseApp;
                 try {
-                    await addDoc(collection(db, 'messages'), {
+                    await addDoc(collection(db, "messages"), {
                         text: message,
                         uid: user.uid,
                         displayName: user.displayName,
+                        photoURL: user.photoURL,
                         createdAt: serverTimestamp()
                     });
                     setMessage("");
-                    setStatusMsg("تم إرسال الرسالة بنجاح!");
-                    setTimeout(() => setStatusMsg(""), 3000);
                 } catch (error) {
-                    console.error("Error sending message:", error.message);
-                    setStatusMsg("فشل إرسال الرسالة.");
-                } finally {
-                    setIsSending(false);
+                    setStatus("فشل إرسال الرسالة.");
                 }
             };
 
-            const getRandomQuote = () => {
-                setIsRefreshing(true);
-                setTimeout(() => {
-                    const randomIndex = Math.floor(Math.random() * INITIAL_QUOTES.length);
-                    setCurrentQuote(INITIAL_QUOTES[randomIndex]);
-                    setIsRefreshing(false);
-                }, 500);
-            };
-
-            if (loading) {
-                return (
-                    <div className="min-h-screen flex items-center justify-center">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-                    </div>
-                );
-            }
+            if (loading) return (
+                <div className="h-screen flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                </div>
+            );
 
             return (
-                <div className="min-h-screen flex flex-col">
+                <div className="max-w-md mx-auto h-screen flex flex-col bg-white shadow-2xl overflow-hidden">
                     {/* Header */}
-                    <header className="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center sticky top-0 z-10">
+                    <header className="p-4 border-b flex justify-between items-center glass sticky top-0 z-10">
                         <div className="flex items-center gap-2">
-                            <i data-lucide="quote" className="text-blue-600 w-6 h-6"></i>
-                            <h1 className="text-xl font-bold tracking-tight">حكم ونصائح</h1>
+                            <div className="bg-blue-600 p-1.5 rounded-lg">
+                                <i data-lucide="message-circle" className="w-5 h-5 text-white"></i>
+                            </div>
+                            <h1 className="font-bold text-lg text-slate-800">دردشة المجموعات</h1>
                         </div>
-                        
-                        <div className="flex items-center gap-4">
-                            {user ? (
-                                <div className="flex items-center gap-3">
-                                    <div className="text-right hidden sm:block">
-                                        <p className="text-sm font-medium">{user.displayName}</p>
-                                        <p className="text-xs text-slate-500">{user.email}</p>
-                                    </div>
-                                    <img 
-                                        src={user.photoURL || 'https://via.placeholder.com/40'} 
-                                        alt="User" 
-                                        className="w-10 h-10 rounded-full border border-slate-200"
-                                        referrerPolicy="no-referrer"
-                                    />
-                                    <button 
-                                        onClick={handleSignOut}
-                                        className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                    >
-                                        <i data-lucide="log-out" className="w-5 h-5"></i>
-                                    </button>
-                                </div>
-                            ) : (
-                                <button 
-                                    onClick={handleSignIn}
-                                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-all shadow-sm"
-                                >
-                                    <i data-lucide="log-in" className="w-4 h-4"></i>
-                                    <span>تسجيل الدخول بقوقل</span>
+                        {user ? (
+                            <div className="flex items-center gap-3">
+                                <img src={user.photoURL} className="w-8 h-8 rounded-full border border-slate-200" referrerPolicy="no-referrer" />
+                                <button onClick={handleLogout} className="text-slate-400 hover:text-red-500 transition-colors">
+                                    <i data-lucide="log-out" className="w-5 h-5"></i>
                                 </button>
-                            )}
-                        </div>
+                            </div>
+                        ) : (
+                            <button onClick={handleLogin} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-full text-sm font-bold transition-all shadow-sm">
+                                تسجيل الدخول
+                            </button>
+                        )}
                     </header>
 
-                    {/* Main Content */}
-                    <main className="max-w-3xl mx-auto px-6 py-12 sm:py-24 flex-grow w-full">
-                        <div className="text-center mb-12">
-                            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 mb-4">
-                                اكتشف حكمة اليوم
-                            </h2>
-                            <p className="text-slate-600 max-w-lg mx-auto">
-                                موقع بسيط لتجربة تسجيل الدخول بحساب قوقل مع Firebase وعرض حكم ونصائح عشوائية في ملف واحد.
-                            </p>
-                        </div>
+                    {/* Status Bar */}
+                    {status && <div className="bg-blue-50 text-blue-700 text-[11px] py-1 px-4 text-center border-b border-blue-100">{status}</div>}
 
-                        <div className="relative">
-                            <div className="bg-white p-8 sm:p-12 rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-100 text-center transition-all duration-500">
-                                <blockquote className="relative z-10">
-                                    <p className={`text-2xl sm:text-3xl font-medium leading-relaxed mb-6 text-slate-800 transition-opacity duration-300 ${isRefreshing ? 'opacity-0' : 'opacity-100'}`}>
-                                        "{currentQuote.text}"
-                                    </p>
-                                    <cite className={`text-slate-500 font-medium not-italic transition-opacity duration-300 ${isRefreshing ? 'opacity-0' : 'opacity-100'}`}>
-                                        — {currentQuote.author}
-                                    </cite>
-                                </blockquote>
+                    {/* Messages Area */}
+                    <div className="flex-grow overflow-y-auto p-4 space-y-4 bg-slate-50/50 chat-container">
+                        {chatMessages.length === 0 ? (
+                            <div className="h-full flex flex-col items-center justify-center text-slate-400">
+                                <i data-lucide="messages-square" className="w-12 h-12 mb-2 opacity-20"></i>
+                                <p className="text-sm">لا توجد رسائل بعد. ابدأ المحادثة!</p>
                             </div>
-
-                            <div className="mt-8 flex justify-center">
-                                <button
-                                    onClick={getRandomQuote}
-                                    disabled={isRefreshing}
-                                    className="flex items-center gap-2 bg-white border border-slate-200 hover:border-blue-300 hover:text-blue-600 px-6 py-3 rounded-full font-semibold transition-all shadow-sm active:scale-95 disabled:opacity-50"
-                                >
-                                    <i data-lucide="refresh-cw" className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`}></i>
-                                    <span>حكمة أخرى</span>
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Chat Room Section */}
-                        <div className="mt-12 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden flex flex-col h-[500px]">
-                            <div className="bg-blue-600 p-4 text-white flex items-center gap-2">
-                                <i data-lucide="message-square" className="w-5 h-5"></i>
-                                <h3 className="font-bold">غرفة الدردشة العامة</h3>
-                            </div>
-                            
-                            <div className="flex-grow overflow-y-auto p-4 space-y-4 bg-slate-50/50">
-                                {chatMessages.length === 0 ? (
-                                    <div className="text-center text-slate-400 mt-10">
-                                        لا توجد رسائل بعد. كن أول من يرسل!
-                                    </div>
-                                ) : (
-                                    chatMessages.map((msg) => (
-                                        <div 
-                                            key={msg.id} 
-                                            className={`flex flex-col ${msg.uid === user?.uid ? 'items-start' : 'items-end'}`}
-                                        >
-                                            <div className={`max-w-[80%] p-3 rounded-2xl text-sm ${
-                                                msg.uid === user?.uid 
-                                                ? 'bg-blue-600 text-white rounded-tr-none' 
-                                                : 'bg-white border border-slate-200 text-slate-800 rounded-tl-none shadow-sm'
-                                            }`}>
-                                                <p className="font-bold text-[10px] mb-1 opacity-80">
-                                                    {msg.displayName || 'مجهول'}
-                                                </p>
-                                                <p className="whitespace-pre-wrap break-words">{msg.text}</p>
-                                            </div>
+                        ) : (
+                            chatMessages.map(msg => (
+                                <div key={msg.id} className={`flex ${msg.uid === user?.uid ? 'justify-start' : 'justify-end'}`}>
+                                    <div className={`max-w-[85%] p-3 rounded-2xl text-sm shadow-sm ${
+                                        msg.uid === user?.uid 
+                                        ? 'bg-blue-600 text-white rounded-tr-none' 
+                                        : 'bg-white text-slate-800 rounded-tl-none border border-slate-100'
+                                    }`}>
+                                        <div className="flex items-center gap-1.5 mb-1">
+                                            <p className={`text-[10px] font-bold ${msg.uid === user?.uid ? 'text-blue-100' : 'text-blue-600'}`}>
+                                                {msg.displayName}
+                                            </p>
                                         </div>
-                                    ))
-                                )}
-                                <div ref={scrollRef} />
-                            </div>
-
-                            <div className="p-4 border-t border-slate-100 bg-white">
-                                <form onSubmit={handleSendMessage} className="flex gap-2">
-                                    <input
-                                        type="text"
-                                        value={message}
-                                        onChange={(e) => setMessage(e.target.value)}
-                                        placeholder={user ? "اكتب رسالتك هنا..." : "سجل الدخول للمشاركة في الدردشة"}
-                                        className="flex-grow p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
-                                        disabled={!user || isSending}
-                                    />
-                                    <button
-                                        type="submit"
-                                        disabled={!user || isSending || !message.trim()}
-                                        className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg transition-all disabled:opacity-50 flex items-center justify-center min-w-[44px]"
-                                    >
-                                        {isSending ? <i data-lucide="refresh-cw" className="w-5 h-5 animate-spin"></i> : <i data-lucide="send" className="w-5 h-5"></i>}
-                                    </button>
-                                </form>
-                                {!user && <p className="text-[10px] text-red-500 mt-2 text-center">يجب تسجيل الدخول لتتمكن من الدردشة.</p>}
-                            </div>
-                        </div>
-
-                        {/* Firebase Status Card */}
-                        <div className="mt-16 bg-blue-50 rounded-xl p-6 border border-blue-100">
-                            <div className="flex items-start gap-4 text-right">
-                                <div className="bg-blue-600 p-2 rounded-lg">
-                                    <i data-lucide="shield-check" className="w-6 h-6 text-white"></i>
+                                        <p className="leading-relaxed">{msg.text}</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h3 className="font-bold text-blue-900 mb-1">حالة Firebase</h3>
-                                    <p className="text-sm text-blue-800 leading-relaxed">
-                                        {user 
-                                            ? `أنت مسجل الدخول بنجاح! تم حفظ بياناتك في Firestore. معرف المستخدم: ${user.uid.substring(0, 8)}...`
-                                            : "سجل دخولك لتجربة حفظ البيانات في قاعدة بيانات Firestore والتأكد من عمل النظام بشكل صحيح."}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </main>
+                            ))
+                        )}
+                        <div ref={scrollRef} />
+                    </div>
 
-                    {/* Footer */}
-                    <footer className="py-8 text-center text-slate-400 text-sm border-t border-slate-100">
-                        <p>© 2026 تجربة Firebase و Google Auth - ملف واحد</p>
+                    {/* Input Area */}
+                    <footer className="p-4 border-t glass bg-white">
+                        <form onSubmit={sendMessage} className="flex gap-2">
+                            <input 
+                                type="text" 
+                                value={message}
+                                onChange={(e) => setMessage(e.target.value)}
+                                disabled={!user}
+                                placeholder={user ? "اكتب رسالتك..." : "سجل الدخول للمشاركة في الدردشة"}
+                                className="flex-grow p-3 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition-all bg-slate-50/50"
+                            />
+                            <button 
+                                disabled={!user || !message.trim()} 
+                                className="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-2xl disabled:opacity-50 disabled:hover:bg-blue-600 transition-all shadow-md shadow-blue-200"
+                            >
+                                <i data-lucide="send" className="w-5 h-5"></i>
+                            </button>
+                        </form>
+                        {!user && <p className="text-[10px] text-slate-400 mt-2 text-center italic">يجب تسجيل الدخول لتتمكن من إرسال الرسائل.</p>}
                     </footer>
                 </div>
             );
@@ -387,9 +235,17 @@
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
-
-        // Initialize icons after React render
-        setTimeout(() => lucide.createIcons(), 500);
+        
+        // Initialize icons
+        const initIcons = () => {
+            if (window.lucide) {
+                lucide.createIcons();
+            } else {
+                setTimeout(initIcons, 100);
+            }
+        };
+        initIcons();
+        
         // Re-initialize icons on any DOM change or button click
         document.addEventListener('click', () => setTimeout(() => lucide.createIcons(), 100));
     </script>
