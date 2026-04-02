@@ -2,16 +2,17 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vivy Chat - فيفي</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Vivy Chat | فيفي</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Arabic:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary: #6366f1;
-            --primary-hover: #4f46e5;
-            --bg-dark: #0f172a;
-            --glass: rgba(30, 41, 59, 0.7);
+            --bg-dark: #020617;
+            --card-bg: #0f172a;
         }
         body {
             font-family: 'Noto Sans Arabic', 'Inter', sans-serif;
@@ -22,20 +23,22 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            -webkit-tap-highlight-color: transparent;
         }
-        .glass-effect {
-            background: var(--glass);
+        .glass {
+            background: rgba(15, 23, 42, 0.8);
             backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.08);
         }
         .message-bubble {
             max-width: 85%;
-            padding: 10px 16px;
-            border-radius: 20px;
+            padding: 12px 16px;
+            border-radius: 22px;
             font-size: 0.95rem;
             line-height: 1.5;
             position: relative;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            word-wrap: break-word;
         }
         .message-me {
             background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
@@ -48,7 +51,7 @@
             color: #f1f5f9;
             border-bottom-left-radius: 4px;
             align-self: flex-end;
-            border: 1px solid rgba(255,255,255,0.05);
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
         .custom-scroll::-webkit-scrollbar {
             width: 4px;
@@ -57,21 +60,25 @@
             background: transparent;
         }
         .custom-scroll::-webkit-scrollbar-thumb {
-            background: rgba(255,255,255,0.1);
+            background: rgba(255, 255, 255, 0.1);
             border-radius: 10px;
         }
-        .animate-fade-in {
-            animation: fadeIn 0.3s ease-out forwards;
+        .animate-in {
+            animation: slideUp 0.3s ease-out forwards;
         }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(12px); }
             to { opacity: 1; transform: translateY(0); }
+        }
+        input:focus, textarea:focus {
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.4);
         }
     </style>
 </head>
 <body>
     <div id="root" class="h-full"></div>
 
+    <!-- Import Map for ESM Modules -->
     <script type="importmap">
     {
       "imports": {
@@ -95,7 +102,7 @@
         import * as Lucide from 'lucide-react';
         import { motion, AnimatePresence } from 'framer-motion';
 
-        // --- Firebase Configuration (Updated with your data) ---
+        // --- Firebase Configuration (Your Project Data) ---
         const firebaseConfig = {
           apiKey: "AIzaSyBl_EdsUzXTMqpvffG9FSoXQr98QaE-Nhg",
           authDomain: "vivy-b1aec.firebaseapp.com",
@@ -110,7 +117,7 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // Set persistence to local
+        // Enable Local Persistence
         setPersistence(auth, browserLocalPersistence);
 
         // --- Components ---
@@ -132,11 +139,12 @@
                 if (cleanUsername.startsWith('@')) cleanUsername = cleanUsername.substring(1);
                 
                 if (cleanUsername.length < 3) {
-                    setError('اسم المستخدم قصير جداً');
+                    setError('اسم المستخدم يجب أن يكون 3 أحرف على الأقل');
                     setLoading(false);
                     return;
                 }
 
+                // Internal Email Trick: username@app.com
                 const email = `${cleanUsername}@app.com`;
 
                 if (!isLogin && password !== confirmPassword) {
@@ -149,7 +157,7 @@
                     if (isLogin) {
                         await signInWithEmailAndPassword(auth, email, password);
                     } else {
-                        // Check if username exists in Firestore
+                        // Check uniqueness in Firestore
                         const userDoc = await getDoc(doc(db, 'usernames', cleanUsername));
                         if (userDoc.exists()) {
                             setError('اسم المستخدم محجوز مسبقاً');
@@ -173,7 +181,7 @@
                     } else if (err.code === 'auth/email-already-in-use') {
                         setError('اسم المستخدم مستخدم بالفعل');
                     } else {
-                        setError('حدث خطأ ما، حاول مرة أخرى');
+                        setError('حدث خطأ، يرجى المحاولة لاحقاً');
                     }
                 } finally {
                     setLoading(false);
@@ -181,17 +189,17 @@
             };
 
             return React.createElement('div', { className: 'min-h-screen flex items-center justify-center p-6 bg-slate-950' },
-                React.createElement(motion.div, { initial: { opacity: 0, scale: 0.9 }, animate: { opacity: 1, scale: 1 }, className: 'w-full max-w-md glass-effect p-8 rounded-[2.5rem] shadow-2xl' },
+                React.createElement(motion.div, { initial: { opacity: 0, scale: 0.95 }, animate: { opacity: 1, scale: 1 }, className: 'w-full max-w-md glass p-8 rounded-[2.5rem] shadow-2xl' },
                     React.createElement('div', { className: 'text-center mb-10' },
-                        React.createElement('div', { className: 'inline-flex items-center justify-center w-20 h-20 bg-indigo-600 rounded-3xl mb-4 shadow-xl shadow-indigo-500/20' },
+                        React.createElement('div', { className: 'inline-flex items-center justify-center w-20 h-20 bg-indigo-600 rounded-3xl mb-4 shadow-xl shadow-indigo-500/30' },
                             React.createElement(Lucide.AtSign, { className: 'w-10 h-10 text-white' })
                         ),
                         React.createElement('h2', { className: 'text-4xl font-bold tracking-tight' }, 'فيفي Vivy'),
-                        React.createElement('p', { className: 'text-slate-400 mt-2 font-medium' }, isLogin ? 'أهلاً بك مجدداً' : 'انضم إلينا الآن')
+                        React.createElement('p', { className: 'text-slate-400 mt-2 font-medium' }, isLogin ? 'سجل دخولك للمتابعة' : 'أنشئ حسابك الجديد')
                     ),
                     React.createElement('div', { className: 'flex p-1.5 bg-slate-800/50 rounded-2xl mb-8' },
-                        React.createElement('button', { onClick: () => setIsLogin(true), className: `flex-1 py-2.5 text-sm font-bold rounded-xl transition-all ${isLogin ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400'}` }, 'دخول'),
-                        React.createElement('button', { onClick: () => setIsLogin(false), className: `flex-1 py-2.5 text-sm font-bold rounded-xl transition-all ${!isLogin ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400'}` }, 'تسجيل')
+                        React.createElement('button', { onClick: () => setIsLogin(true), className: `flex-1 py-3 text-sm font-bold rounded-xl transition-all ${isLogin ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400'}` }, 'دخول'),
+                        React.createElement('button', { onClick: () => setIsLogin(false), className: `flex-1 py-3 text-sm font-bold rounded-xl transition-all ${!isLogin ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400'}` }, 'تسجيل')
                     ),
                     React.createElement('form', { onSubmit: handleAuth, className: 'space-y-5' },
                         React.createElement('div', null,
@@ -257,10 +265,10 @@
                 }
             };
 
-            return React.createElement('div', { className: 'flex flex-col h-screen max-w-2xl mx-auto bg-slate-900 shadow-2xl' },
+            return React.createElement('div', { className: 'flex flex-col h-screen max-w-2xl mx-auto bg-slate-900 shadow-2xl relative' },
                 React.createElement('header', { className: 'h-20 border-b border-slate-800 flex items-center justify-between px-6 bg-slate-900/80 backdrop-blur-xl sticky top-0 z-10' },
                     React.createElement('div', { className: 'flex items-center gap-4' },
-                        React.createElement('div', { className: 'w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg' },
+                        React.createElement('div', { className: 'w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/20' },
                             React.createElement(Lucide.MessageCircle, { className: 'text-white w-7 h-7' })
                         ),
                         React.createElement('div', null,
@@ -278,11 +286,11 @@
                         React.createElement('button', { onClick: () => signOut(auth), className: 'p-2.5 text-slate-400 hover:text-rose-400 bg-slate-800 rounded-xl transition-colors' }, React.createElement(Lucide.LogOut, { size: 20 }))
                     )
                 ),
-                React.createElement('div', { ref: scrollRef, className: 'flex-1 overflow-y-auto p-6 space-y-6 custom-scroll bg-[url("https://www.transparenttextures.com/patterns/dark-matter.png")]' },
+                React.createElement('div', { ref: scrollRef, className: 'flex-1 overflow-y-auto p-6 space-y-6 custom-scroll' },
                     messages.map((m, i) => {
                         const isMe = m.senderUid === user.uid;
                         const showHeader = i === 0 || messages[i-1].senderUid !== m.senderUid;
-                        return React.createElement('div', { key: m.id, className: `flex flex-col ${isMe ? 'items-start' : 'items-end'} animate-fade-in` },
+                        return React.createElement('div', { key: m.id, className: `flex flex-col ${isMe ? 'items-start' : 'items-end'} animate-in` },
                             showHeader && React.createElement('span', { className: 'text-[11px] font-bold text-slate-500 mb-1.5 px-3 uppercase tracking-wider' }, isMe ? 'أنت' : m.senderUsername),
                             React.createElement('div', { className: `message-bubble ${isMe ? 'message-me' : 'message-other'}` },
                                 React.createElement('p', null, m.text),
