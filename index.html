@@ -165,6 +165,7 @@
                 setStatusMsg("جاري توجيهك لصفحة تسجيل الدخول من قوقل...");
                 
                 try {
+                    // Use Redirect exclusively as requested for maximum compatibility
                     await signInWithRedirect(auth, googleProvider);
                 } catch (error) {
                     console.error("Sign in error:", error.message);
